@@ -87,3 +87,50 @@ def get_post_links(subreddit, pages=3):
 
     return links
 
+def scrape_post(session, url):
+    try: 
+        url = url.replace(".json", "")
+        response = session.get(url, timeout=10)
+        print(f"Post status: {response.status_code}")
+
+        if response.status_code != 200:
+            return None
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        
+        title = ""
+        title_tag = soup.find("p", class_="title")
+        if not title_tag:
+            title_tag = soup.find("a", class_="title")
+        if title_tag:
+            title.clean_title(title_tag.get_text(strip=True))
+        
+        body = ""
+        all_body_divs = soup.find_all("div", class_="usertext_body")
+        for div in all_body_divs:
+            md_div = div.find("div", class_="md")
+            if md_div:
+                text = md_div.get_text(strip=True)
+                if len(text) > 10 and not is_sidebar(text):
+                    body = text
+                    break
+        
+        if not body or body in ["[deleted]", "[removed]"]:
+            return None
+        
+        time_tag = soup.find("time")
+        date = time_tag.get("datetime", "")[:10] if time_tag else ""
+        
+        return {
+            "title": title,
+            "body": body,
+            "date": date,
+            "url": url,
+            "subreddit": url.split("/r/")[1].split("/")[0]
+        }
+    
+    except Exception as e:
+        print(f" Error: {e}")
+        return None
+    
+
