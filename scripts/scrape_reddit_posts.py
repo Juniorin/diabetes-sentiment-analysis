@@ -39,3 +39,8 @@ FLAIRS = [
 
     "Newly Diagnosed", "General Question", "Food/Diet", "Hard Work", "Joke/Meme/Satire"
 ]
+
+# Returns True/False
+def is_sidebar(text) -> bool:
+    text_lower = text.lower()
+    return any(marker in text_lower for marker in SIDEBAR_MARKERS)
