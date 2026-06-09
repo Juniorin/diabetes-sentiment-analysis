@@ -44,3 +44,15 @@ FLAIRS = [
 def is_sidebar(text) -> bool:
     text_lower = text.lower()
     return any(marker in text_lower for marker in SIDEBAR_MARKERS)
+
+def clean_title(title):
+    # Removes flair prefix
+    for flair in FLAIRS:
+        if title.startswith(flair):
+            title.title[len(flair):].strip()
+    
+    # Removes subreddit suffix
+    if "(self." in title:
+        title = title[:title.rfind("(self.")].strip()
+    return title
+
