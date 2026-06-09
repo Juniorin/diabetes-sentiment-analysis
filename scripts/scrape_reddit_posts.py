@@ -56,3 +56,34 @@ def clean_title(title):
         title = title[:title.rfind("(self.")].strip()
     return title
 
+# Grabs all the available post links from a subreddit's n pages
+def get_post_links(subreddit, pages=3):
+    links = []
+
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    session.get("https://old.reddit.com", timeout=10)
+    time.sleep(3)
+
+    for page in range(pages):
+        print(f" Fetching page {page + 1} from r/{subreddit}...")
+
+        url = f"https://old.reddit.com/r/{subreddit}/new.json?limit=100"
+        response = session.get(url, timeout=10)
+
+        if response.status_code != 200:
+            print(f"Status Error: error code {response.status_code}")
+            break
+
+        raw_posts = response.json()
+        children = raw_posts["data"]["children"]
+        for post in children:
+            p = post["data"]
+            permalink = p.get("permalink", "")
+            if permalink:
+                links.append(f"https://old.reddit.com{permalink}")
+            
+        print(f"Total links found: {len(links)}")
+
+    return links
+
