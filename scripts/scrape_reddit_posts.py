@@ -49,7 +49,7 @@ def clean_title(title):
     # Removes flair prefix
     for flair in FLAIRS:
         if title.startswith(flair):
-            title.title[len(flair):].strip()
+            title = title[len(flair):].strip()
     
     # Removes subreddit suffix
     if "(self." in title:
@@ -59,6 +59,7 @@ def clean_title(title):
 # Grabs all the available post links from a subreddit's n pages
 def get_post_links(subreddit, pages=3):
     links = []
+    after = None
 
     session = requests.Session()
     session.headers.update(HEADERS)
@@ -69,6 +70,8 @@ def get_post_links(subreddit, pages=3):
         print(f" Fetching page {page + 1} from r/{subreddit}...")
 
         url = f"https://old.reddit.com/r/{subreddit}/new.json?limit=100"
+        if after:
+            url += f"&after={after}"
         response = session.get(url, timeout=10)
 
         if response.status_code != 200:
@@ -76,15 +79,16 @@ def get_post_links(subreddit, pages=3):
             break
 
         raw_posts = response.json()
+        after = raw_posts["data"]["after"]
         children = raw_posts["data"]["children"]
         for post in children:
             p = post["data"]
             permalink = p.get("permalink", "")
             if permalink:
                 links.append(f"https://old.reddit.com{permalink}")
-            
-        print(f"Total links found: {len(links)}")
 
+        time.sleep(3)
+        
     return links
 
 def scrape_post(session, url):
@@ -103,10 +107,10 @@ def scrape_post(session, url):
         if not title_tag:
             title_tag = soup.find("a", class_="title")
         if title_tag:
-            title.clean_title(title_tag.get_text(strip=True))
+            title = clean_title(title_tag.get_text(strip=True))
         
         body = ""
-        all_body_divs = soup.find_all("div", class_="usertext_body")
+        all_body_divs = soup.find_all("div", class_="usertext-body")
         for div in all_body_divs:
             md_div = div.find("div", class_="md")
             if md_div:
@@ -133,4 +137,35 @@ def scrape_post(session, url):
         print(f" Error: {e}")
         return None
     
+if __name__ == '__main__':
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    session.get("https://old.reddit.com", timeout=10)
+    time.sleep(3)
 
+    all_posts = []
+
+    for subreddit in SUBREDDITS:
+        print(f"\nCollecting links from r/{subreddit}...")
+        links = get_post_links(subreddit, pages=3)
+        print(f"Found {len(links)} links...now scraping each post...")
+
+        for i, link in enumerate(links):
+            post = scrape_post(session, link)
+            if post:
+                all_posts.append(post)
+            time.sleep(2)
+        
+        print(f"Done with r/{subreddit}...{len(all_posts)} total posts so far...")
+        time.sleep(3)
+    
+    df = pd.DataFrame(all_posts)
+    df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8")
+    print(f"Scraping complete")
+    print(f"Total posts: {len(all_posts)}")
+    print(f"Saved to: {OUTPUT_FILE}")
+
+    if len(all_posts) > 0:
+        print(df["subreddit"].value_counts())
+        print(f"\nSample title: {df['title'].iloc[0]}")
+        print(f"Sample body: {df['body'].iloc[0]}")
