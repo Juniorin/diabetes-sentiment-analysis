@@ -53,7 +53,7 @@ def clean_title(title):
     
     # Removes subreddit suffix
     if "(self." in title:
-        title = title[:title.rfind("(self.")].strip()
+        title = title[:title.rfind("(old.")].strip()
     return title
 
 # Grabs all the available post links from a subreddit's n pages
@@ -88,16 +88,16 @@ def get_post_links(subreddit, pages=3):
                 links.append(f"https://old.reddit.com{permalink}")
 
         time.sleep(3)
-        
+
     return links
 
 def scrape_post(session, url):
     try: 
         url = url.replace(".json", "")
         response = session.get(url, timeout=10)
-        print(f"Post status: {response.status_code}")
 
         if response.status_code != 200:
+            print(f"Post status: {response.status_code}")
             return None
         
         soup = BeautifulSoup(response.text, "html.parser")
@@ -154,8 +154,12 @@ if __name__ == '__main__':
             post = scrape_post(session, link)
             if post:
                 all_posts.append(post)
-            time.sleep(2)
-        
+            if i % 25 == 0 and i > 0:
+                print(f"Scraped: {i} posts so far...")
+                time.sleep(30)
+            else:
+                time.sleep(5)
+
         print(f"Done with r/{subreddit}...{len(all_posts)} total posts so far...")
         time.sleep(3)
     
