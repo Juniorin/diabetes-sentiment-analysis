@@ -34,7 +34,7 @@ def preprocess(df):
     return df
 
 if __name__ == "__main__":
-    df = pd.read.csv(INPUT_FILE)
+    df = pd.read_csv(INPUT_FILE)
     print(f"Loaded {len(df)} posts from {INPUT_FILE}")
 
     df = preprocess(df)
