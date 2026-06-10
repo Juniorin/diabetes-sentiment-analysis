@@ -16,3 +16,9 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
 
     return text
+
+def shorten_text(text, max_tokens=MAX_INPUT_LENGTH):
+    words = text.split()
+    if len(words) > max_tokens:
+        words = words[:max_tokens]
+    return ' '.join(words)
