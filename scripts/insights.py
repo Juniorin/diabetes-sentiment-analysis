@@ -2,6 +2,7 @@ import pandas as pd
 from collections import Counter
 from nltk.corpus import stopwords
 import nltk
+import webbrowser
 
 MANUAL_STOP_WORDS = {
     "like", "get", "know", "anyone", "also", "would", "one",
@@ -17,7 +18,7 @@ MANUAL_STOP_WORDS = {
 nltk.download("stopwords")
 STOP_WORDS = set(stopwords.words("english")).union(MANUAL_STOP_WORDS)
 
-SENTIMENT_INPUT_FILE = "data/results.csv"
+SENTIMENT_INPUT_FILE = "data/sentiment_results.csv"
 KEYWORD_INPUT_FILE = "data/keyword_results.csv"
 OUTPUT_FILE = "data/insights_results.csv"
 
@@ -43,8 +44,52 @@ def keyword_by_sentiment(df):
 
         print(f"\n--Top 10 words in {label} posts--")
         for word, count in top_words:
-            print(f" {word:<20} | {count}")
+            print(f" {word:<15} | {count} | {count/len(group)*100:.1f}% posts")
         
+
+def explore_posts(df):
+    print(f"\n-- Post Explorer --")
+    print(f"Enter a keyword and sentiment to see random matching posts.")
+    print(f"Sentiments: positive, negative, neutral")
+    print(f"Type 'quit' to exit\n")
+
+    while True:
+        keyword = input("Keyword: ").strip().lower()
+        if keyword == "quit":
+            break
+
+        sentiment = input("Sentiment (positive/negative/neutral): ").strip().lower()
+        if sentiment not in ["positive", "negative", "neutral"]:
+            print(f"Invalid sentiment. Choose positive, negative, or neutral.\n")
+            continue
+
+        filtered = df[
+            df["body_cleaned"].str.contains(keyword, case=False, na=False) &
+            (df["sentiment"] == sentiment)
+        ]
+
+        if len(filtered) == 0:
+            print(f"No {sentiment} posts found containing '{keyword}'\n")
+            continue
+
+        post = filtered.sample(1).iloc[0]
+
+        print(f"\n{'='*50}")
+        print(f"Title:     {post['title']}")
+        print(f"Subreddit: r/{post['subreddit']}")
+        print(f"Date:      {post['date']}")
+        print(f"Sentiment: {post['sentiment']} | Score: {post['score']:.2f}")
+        print(f"\nBody:\n{post['body_cleaned'][:1000]}")
+        print(f"{'='*50}")
+
+        view_full = input(f"\nView full post? (y/n): ").strip().lower()
+        if view_full != "n":
+            webbrowser.open(post["url"])
+
+        another = input("\nSee another post? (y/n): ").strip().lower()
+        if another != "y":
+            print("\nThanks!")
+            break
 
 if __name__ == '__main__':
     df = pd.read_csv(SENTIMENT_INPUT_FILE)
@@ -53,5 +98,4 @@ if __name__ == '__main__':
     sentiment_summary(df)
     keyword_by_sentiment(df)
 
-    df.to_csv(OUTPUT_FILE, index=False, encoding='utf-8')
-    print(f"Saved to {OUTPUT_FILE}")
+    explore_posts(df)
