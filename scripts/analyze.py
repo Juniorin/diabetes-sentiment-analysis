@@ -12,3 +12,14 @@ def load_model():
         return(f"Exception: {e}")
     
     return model
+
+def analyze_sentiment(model, text):
+    analyzed_results = model(text)
+
+    label = analyzed_results[0]["label"]
+    score = analyzed_results[0]["score"]
+
+    return {
+        "label": label,
+        "score": score,
+    }
