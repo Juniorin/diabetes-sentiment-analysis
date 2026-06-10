@@ -32,3 +32,16 @@ def preprocess(df):
     df = df[df["body_cleaned"].str.strip() != ""]
 
     return df
+
+if __name__ == "__main__":
+    df = pd.read.csv(INPUT_FILE)
+    print(f"Loaded {len(df)} posts from {INPUT_FILE}")
+
+    df = preprocess(df)
+    print(f"Cleaned {len(df)} posts")
+
+    df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8")
+    print(f"Saved to {OUTPUT_FILE}")
+
+    # 3 Samples of cleaned data
+    print(df[["title", "body_cleaned"]].head(3))
