@@ -2,7 +2,7 @@ import pandas as pd
 from transformers import pipeline
 
 INPUT_FILE = "data/cleaned_posts.csv"
-OUTPUT_FILE = "data/results.csv"
+OUTPUT_FILE = "data/sentiment_results.csv"
 MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 
 # Load twitter RoBERTa's model
